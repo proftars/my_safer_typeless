@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+*.db
+*.db-journal
+*.wav
+*.webm
+audio-uploads/
+.DS_Store
+*.log

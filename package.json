@@ -1,0 +1,25 @@
+{
+  "name": "my-safer-typeless",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Self-hosted Typeless alternative - voice-to-text with AI refinement",
+  "workspaces": [
+    "server",
+    "shared",
+    "admin-portal",
+    "electron"
+  ],
+  "scripts": {
+    "dev:server": "npm run dev --workspace=server",
+    "build:admin": "npm run build --workspace=admin-portal",
+    "dev": "npm run dev:server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/proftars/my_safer_typeless.git"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
