@@ -1,0 +1,69 @@
+Admin Portal - Complete File Listing
+=====================================
+
+Configuration Files:
+  package.json              - Dependencies and build scripts
+  tsconfig.json            - TypeScript compiler options
+  tsconfig.node.json       - TypeScript config for build tools
+  vite.config.ts           - Vite bundler configuration
+  tailwind.config.js       - Tailwind CSS configuration
+  postcss.config.js        - PostCSS configuration for CSS processing
+  .gitignore              - Git ignore patterns
+
+HTML & Entry Points:
+  index.html              - HTML entry point for the SPA
+  src/main.tsx            - React app entry point
+  src/index.css           - Tailwind CSS directives
+
+Core Application:
+  src/App.tsx             - Router setup and route definitions
+
+Authentication & State:
+  src/contexts/AuthContext.tsx  - Authentication state management with token handling
+
+API & Network:
+  src/lib/api.ts          - Centralized API client with all endpoints
+
+Components:
+  src/components/Layout.tsx    - Main layout with sidebar and top bar
+  src/components/Sidebar.tsx   - Navigation sidebar
+
+Pages:
+  src/pages/LoginPage.tsx      - Password login page
+  src/pages/DashboardPage.tsx  - Statistics and charts dashboard
+  src/pages/HistoryPage.tsx    - Transcription history with search and pagination
+  src/pages/VocabularyPage.tsx - Vocabulary CRUD with import/export
+  src/pages/SettingsPage.tsx   - Settings management
+
+Documentation:
+  BUILD.md                - Build and development guide
+  ARCHITECTURE.md         - Architecture and design overview
+  FILES_CREATED.txt       - This file
+
+Total Files Created: 22
+
+Key Features Implemented:
+  ✓ Authentication with token-based login
+  ✓ Protected routes with automatic redirect
+  ✓ Dashboard with stats cards and 30-day usage charts
+  ✓ Transcription history with search and pagination
+  ✓ Vocabulary management with CRUD operations
+  ✓ Import/export functionality for vocabulary
+  ✓ Settings page with dynamic form
+  ✓ Server health status indicators
+  ✓ Traditional Chinese UI labels (繁體中文)
+  ✓ Responsive Tailwind CSS design
+  ✓ TypeScript for type safety
+  ✓ Vite for fast development and optimized builds
+
+To Build & Run:
+  1. npm install
+  2. npm run dev        (development server on :5173)
+  3. npm run build      (production build to dist/)
+  4. npm run preview    (preview production build)
+
+Production Deployment:
+  - npm run build
+  - Copy dist/ contents to server at /admin/ path
+  - API calls automatically go to /api/ on same server
+  - Ready to serve with any static file server
