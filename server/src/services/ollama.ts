@@ -88,6 +88,7 @@ export async function refineText(
       model: config.ollamaModel,
       prompt,
       stream: false,
+      think: false, // Disable thinking mode for Qwen3 (faster, no <think> overhead)
       options: {
         temperature: 0.3, // Low temperature for consistent output
         num_predict: 2048,
@@ -101,7 +102,10 @@ export async function refineText(
   }
 
   const result = (await response.json()) as OllamaGenerateResponse;
-  const refinedText = result.response.trim();
+  // Strip any residual <think>...</think> blocks (safety net for Qwen3)
+  const refinedText = result.response
+    .replace(/<think>[\s\S]*?<\/think>/g, '')
+    .trim();
 
   return {
     refinedText,

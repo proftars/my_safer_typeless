@@ -1,3 +1,4 @@
+import 'dotenv/config'; // Load .env before anything else
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
@@ -40,7 +41,7 @@ app.get('/api/health', async (_req, res) => {
 
   res.json({
     status: 'ok',
-    version: '0.1.0',
+    version: '1.0.0',
     services: {
       groq: groqOk ? 'connected' : 'unavailable',
       ollama: ollama.running
@@ -66,7 +67,7 @@ async function start() {
 
   app.listen(config.port, config.host, async () => {
     console.log('');
-    console.log('  My Safer Typeless Server v0.1.0');
+    console.log('  My Safer Typeless Server v1.0.0');
     console.log('  ================================');
     console.log(`  Server:       http://${config.host}:${config.port}`);
     console.log(`  Admin Portal: http://${config.host}:${config.port}/admin`);

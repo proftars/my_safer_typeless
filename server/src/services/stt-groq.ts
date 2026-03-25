@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 import { config } from '../config';
 
 interface GroqTranscriptionResult {
@@ -28,21 +29,21 @@ export async function transcribeWithGroq(
   // Map language codes: zh-TW -> zh for Whisper
   const whisperLang = language.startsWith('zh') ? 'zh' : language.split('-')[0];
 
-  // Build multipart form data
-  const FormData = (await import('form-data')).default;
-  const form = new FormData();
-  form.append('file', fs.createReadStream(audioFilePath));
-  form.append('model', model);
-  form.append('language', whisperLang);
-  form.append('response_format', 'json');
+  // Build multipart form data using native FormData + Blob (compatible with native fetch in Node 18+)
+  const fileBuffer = fs.readFileSync(audioFilePath);
+  const blob = new Blob([fileBuffer]);
+  const formData = new FormData();
+  formData.append('file', blob, path.basename(audioFilePath));
+  formData.append('model', model);
+  formData.append('language', whisperLang);
+  formData.append('response_format', 'json');
 
   const response = await fetch(config.groqApiUrl, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${apiKey}`,
-      ...form.getHeaders(),
     },
-    body: form as unknown as BodyInit,
+    body: formData,
   });
 
   if (!response.ok) {
