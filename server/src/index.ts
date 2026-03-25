@@ -26,6 +26,11 @@ app.use(express.urlencoded({ extended: true }));
 const adminPortalPath = path.join(__dirname, '..', '..', 'admin-portal', 'dist');
 app.use('/admin', express.static(adminPortalPath));
 
+// Redirect /admin to /admin/ (trailing slash needed for static serving)
+app.get('/admin', (_req, res) => {
+  res.redirect('/admin/');
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/transcribe', transcribeRoutes);

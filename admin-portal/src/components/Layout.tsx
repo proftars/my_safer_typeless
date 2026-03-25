@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Sidebar } from './Sidebar'
 import { api } from '../lib/api'
 
@@ -6,14 +6,14 @@ interface HealthStatus {
   status: string
   version: string
   services: {
-    groq: boolean
-    ollama: boolean
-    whisperCpp: boolean
+    groq: string
+    ollama: string
+    whisperCpp: string
   }
 }
 
 interface LayoutProps {
-  children: React.ReactNode
+  children: ReactNode
 }
 
 export function Layout({ children }: LayoutProps) {
@@ -23,7 +23,7 @@ export function Layout({ children }: LayoutProps) {
   useEffect(() => {
     const fetchHealth = async () => {
       try {
-        const data = await api.getHealth()
+        const data = await api.getHealth() as unknown as HealthStatus
         setHealth(data)
       } catch (err) {
         console.error('Failed to fetch health status:', err)
@@ -37,7 +37,11 @@ export function Layout({ children }: LayoutProps) {
     return () => clearInterval(interval)
   }, [])
 
-  const getServiceColor = (active: boolean) => active ? 'bg-green-500' : 'bg-gray-400'
+  const isServiceOk = (status: string) =>
+    status === 'connected' || status === 'ready' || status.includes('available')
+
+  const getServiceColor = (status: string) =>
+    isServiceOk(status) ? 'bg-green-500' : 'bg-red-400'
 
   return (
     <div className="flex h-screen bg-slate-50">
@@ -54,7 +58,7 @@ export function Layout({ children }: LayoutProps) {
                 <span className="text-gray-600">版本:</span>
                 <span className="font-mono text-gray-900">{health.version}</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1">
                   <div className={`w-2 h-2 rounded-full ${getServiceColor(health.services.groq)}`}></div>
                   <span className="text-xs text-gray-600">Groq</span>

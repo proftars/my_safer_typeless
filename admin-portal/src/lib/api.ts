@@ -26,8 +26,8 @@ class ApiClient {
   }
 
   private async request<T>(
-    method: string,
     endpoint: string,
+    method: string,
     body?: unknown,
     isFormData = false,
   ): Promise<T> {
