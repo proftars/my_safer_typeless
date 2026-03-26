@@ -67,7 +67,7 @@ export class AudioRecorder {
             preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: false,
             contextIsolation: true,
-            enableRemoteModule: false,
+            // enableRemoteModule removed in Electron 28+
             sandbox: true,
           },
         });

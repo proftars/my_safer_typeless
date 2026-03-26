@@ -213,7 +213,7 @@ function createSettingsWindow(): void {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
-      enableRemoteModule: false,
+      // enableRemoteModule removed in Electron 28+
       sandbox: true,
     },
     show: false,
@@ -598,6 +598,10 @@ ipcMain.on('open-settings', () => {
 
 // App event handlers
 app.on('ready', async () => {
+  // Hide dock icon - this is a menu bar only app
+  if (app.dock) {
+    app.dock.hide();
+  }
   // Create a minimal hidden window for IPC
   mainWindow = new BrowserWindow({
     show: false,
@@ -609,7 +613,7 @@ app.on('ready', async () => {
   });
 
   // Load a blank page
-  mainWindow.loadDataURL('data:text/html,<html></html>');
+  mainWindow.loadURL('data:text/html,<html></html>');
 
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -635,7 +639,7 @@ app.on('activate', () => {
       },
     });
 
-    mainWindow.loadDataURL('data:text/html,<html></html>');
+    mainWindow.loadURL('data:text/html,<html></html>');
   }
 });
 

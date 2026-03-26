@@ -1,6 +1,4 @@
-import { Menu, Tray, app, BrowserWindow, dialog } from 'electron';
-import * as path from 'path';
-import * as fs from 'fs';
+import { Menu, Tray, nativeImage, app, Notification, BrowserWindow } from 'electron';
 import { AppState, hotkeyManager } from './hotkey';
 import { settingsManager } from './settings';
 
@@ -16,36 +14,79 @@ export interface TrayManagerEvents {
   onQuit?: () => void;
 }
 
+/**
+ * Create a 32x32 colored circle icon as a NativeImage.
+ * macOS tray icons are typically 22x22 points (44x44 pixels @2x).
+ * We use 32x32 for simplicity which displays well.
+ */
+function createCircleIcon(r: number, g: number, b: number): Electron.NativeImage {
+  const size = 32;
+  const radius = 10;
+  const cx = size / 2;
+  const cy = size / 2;
+
+  // Create raw RGBA pixel buffer
+  const buffer = Buffer.alloc(size * size * 4, 0);
+
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const dist = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
+      const offset = (y * size + x) * 4;
+
+      if (dist <= radius) {
+        // Anti-alias the edge
+        const alpha = dist > radius - 1 ? Math.max(0, Math.min(255, Math.round((radius - dist) * 255))) : 255;
+        buffer[offset] = r;
+        buffer[offset + 1] = g;
+        buffer[offset + 2] = b;
+        buffer[offset + 3] = alpha;
+      }
+    }
+  }
+
+  return nativeImage.createFromBuffer(buffer, {
+    width: size,
+    height: size,
+  });
+}
+
+const ICONS: Record<TrayIconState, { r: number; g: number; b: number }> = {
+  [TrayIconState.IDLE]: { r: 140, g: 140, b: 140 },
+  [TrayIconState.RECORDING]: { r: 220, g: 50, b: 50 },
+  [TrayIconState.PROCESSING]: { r: 220, g: 180, b: 50 },
+  [TrayIconState.ERROR]: { r: 220, g: 130, b: 50 },
+};
+
 export class TrayManager {
   private tray: Tray | null = null;
   private iconState: TrayIconState = TrayIconState.IDLE;
   private events: TrayManagerEvents = {};
+  private iconCache: Map<TrayIconState, Electron.NativeImage> = new Map();
   private mainWindow: BrowserWindow | null = null;
 
   constructor(events: TrayManagerEvents = {}) {
     this.events = events;
   }
 
-  setMainWindow(window: BrowserWindow | null): void {
-    this.mainWindow = window;
+  private getIcon(state: TrayIconState): Electron.NativeImage {
+    if (!this.iconCache.has(state)) {
+      const color = ICONS[state];
+      this.iconCache.set(state, createCircleIcon(color.r, color.g, color.b));
+    }
+    return this.iconCache.get(state)!;
   }
 
   initialize(): void {
-    // Create a simple placeholder icon if assets don't exist
-    const iconPath = this.getOrCreateIcon(TrayIconState.IDLE);
-
-    this.tray = new Tray(iconPath);
-
+    this.tray = new Tray(this.getIcon(TrayIconState.IDLE));
+    this.tray.setToolTip('My Safer Typeless');
     this.updateMenu();
 
-    // Click to toggle recording
     this.tray.on('click', () => {
       if (hotkeyManager.getState() === AppState.IDLE) {
         hotkeyManager['handleHotkeyPress']?.();
       }
     });
 
-    // Right-click context menu
     this.tray.on('right-click', () => {
       this.updateMenu();
     });
@@ -84,10 +125,7 @@ export class TrayManager {
         label: `Toggle Recording (${hotkeyManager.getCurrentHotkey()})`,
         enabled: state === AppState.IDLE || state === AppState.RECORDING,
         click: () => {
-          if (state === AppState.IDLE) {
-            hotkeyManager.setProcessing();
-            // This will be handled by the main process
-          }
+          // Handled by hotkey manager
         },
       },
       { type: 'separator' },
@@ -106,13 +144,13 @@ export class TrayManager {
   private getStatusLabel(): string {
     switch (hotkeyManager.getState()) {
       case AppState.IDLE:
-        return 'Idle';
+        return '待命中';
       case AppState.RECORDING:
-        return 'Recording...';
+        return '錄音中...';
       case AppState.PROCESSING:
-        return 'Processing...';
+        return '處理中...';
       default:
-        return 'Unknown';
+        return '未知';
     }
   }
 
@@ -128,18 +166,15 @@ export class TrayManager {
         this.setIconState(TrayIconState.IDLE);
         break;
     }
-
     this.updateMenu();
   }
 
   private setIconState(state: TrayIconState): void {
     if (this.iconState === state) return;
-
     this.iconState = state;
-    const iconPath = this.getOrCreateIcon(state);
 
     if (this.tray) {
-      this.tray.setImage(iconPath);
+      this.tray.setImage(this.getIcon(state));
     }
   }
 
@@ -148,106 +183,16 @@ export class TrayManager {
     this.updateMenu();
   }
 
-  private getOrCreateIcon(state: TrayIconState): string {
-    const assetsDir = path.join(app.getAppPath(), 'assets');
-
-    // Ensure assets directory exists
-    if (!fs.existsSync(assetsDir)) {
-      fs.mkdirSync(assetsDir, { recursive: true });
-    }
-
-    const iconName = `tray-${state}.png`;
-    const iconPath = path.join(assetsDir, iconName);
-
-    // Create icon if it doesn't exist
-    if (!fs.existsSync(iconPath)) {
-      this.createPlaceholderIcon(iconPath, state);
-    }
-
-    return iconPath;
-  }
-
-  private createPlaceholderIcon(filePath: string, state: TrayIconState): void {
-    // Create a simple PNG using raw bytes for a 16x16 icon
-    // This is a minimal valid PNG file with the appropriate color
-    const colors: Record<TrayIconState, Buffer> = {
-      [TrayIconState.IDLE]: this.createGrayscalePNG(),
-      [TrayIconState.RECORDING]: this.createRedPNG(),
-      [TrayIconState.PROCESSING]: this.createYellowPNG(),
-      [TrayIconState.ERROR]: this.createOrangePNG(),
-    };
-
-    const pngBuffer = colors[state] || colors[TrayIconState.IDLE];
-
-    try {
-      fs.writeFileSync(filePath, pngBuffer);
-    } catch (error) {
-      console.error(`Failed to write icon file: ${error}`);
-    }
-  }
-
-  // Helper methods to generate simple PNG icons
-  private createGrayscalePNG(): Buffer {
-    // 16x16 grayscale PNG (placeholder)
-    return Buffer.from([
-      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
-      0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x10, 0x08, 0x00, 0x00, 0x00, 0x00, 0x82, 0x10, 0x00,
-      0x00, 0x00, 0x00, 0x2c, 0x49, 0x44, 0x41, 0x54, 0x08, 0x99, 0x01, 0x21, 0x00, 0xde, 0xff, 0x80,
-      0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-      0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-      0x7f, 0x80, 0xfe, 0x6b, 0x2f, 0x39, 0xee, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae,
-      0x42, 0x60, 0x82,
-    ]);
-  }
-
-  private createRedPNG(): Buffer {
-    // 16x16 red PNG (placeholder)
-    return Buffer.from([
-      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
-      0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x10, 0x08, 0x02, 0x00, 0x00, 0x00, 0x90, 0x91, 0x68,
-      0x36, 0x00, 0x00, 0x00, 0x1e, 0x49, 0x44, 0x41, 0x54, 0x08, 0x99, 0x01, 0x13, 0x00, 0xec, 0xff,
-      0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff,
-      0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x92, 0xf3, 0x24, 0xc9, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45,
-      0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
-    ]);
-  }
-
-  private createYellowPNG(): Buffer {
-    // 16x16 yellow PNG (placeholder)
-    return Buffer.from([
-      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
-      0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x10, 0x08, 0x02, 0x00, 0x00, 0x00, 0x90, 0x91, 0x68,
-      0x36, 0x00, 0x00, 0x00, 0x1e, 0x49, 0x44, 0x41, 0x54, 0x08, 0x99, 0x01, 0x13, 0x00, 0xec, 0xff,
-      0xff, 0xff, 0x00, 0xff, 0xff, 0x00, 0xff, 0xff, 0x00, 0xff, 0xff, 0x00, 0xff, 0xff, 0x00, 0xff,
-      0xff, 0x00, 0xff, 0xff, 0x00, 0xff, 0xff, 0xb5, 0x3c, 0x62, 0x32, 0x00, 0x00, 0x00, 0x00, 0x49,
-      0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
-    ]);
-  }
-
-  private createOrangePNG(): Buffer {
-    // 16x16 orange PNG (placeholder)
-    return Buffer.from([
-      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
-      0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x10, 0x08, 0x02, 0x00, 0x00, 0x00, 0x90, 0x91, 0x68,
-      0x36, 0x00, 0x00, 0x00, 0x1e, 0x49, 0x44, 0x41, 0x54, 0x08, 0x99, 0x01, 0x13, 0x00, 0xec, 0xff,
-      0xff, 0x7f, 0x00, 0xff, 0x7f, 0x00, 0xff, 0x7f, 0x00, 0xff, 0x7f, 0x00, 0xff, 0x7f, 0x00, 0xff,
-      0x7f, 0x00, 0xff, 0x7f, 0x00, 0xff, 0x7f, 0x4a, 0x7f, 0xf0, 0x91, 0x00, 0x00, 0x00, 0x00, 0x49,
-      0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
-    ]);
+  setMainWindow(window: BrowserWindow | null): void {
+    this.mainWindow = window;
   }
 
   showNotification(title: string, message: string): void {
-    if (this.tray) {
-      this.tray.displayBalloon({
-        title,
-        content: message,
-        icon: this.getOrCreateIcon(TrayIconState.IDLE),
-      });
-    }
+    new Notification({ title, body: message }).show();
   }
 
   showNotificationSuccess(message: string): void {
-    this.showNotification('Success', message);
+    this.showNotification('My Safer Typeless', message);
   }
 
   showNotificationError(message: string): void {
