@@ -1,6 +1,6 @@
 {
   "name": "my-safer-typeless",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Self-hosted Typeless alternative - voice-to-text with AI refinement",
   "workspaces": [
