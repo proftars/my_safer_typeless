@@ -122,18 +122,19 @@ npm run dev
 啟動後你應該看到：
 
 ```
-  My Safer Typeless Server
-  ========================
+  My Safer Typeless Server v0.3.0
+  ================================
   Server:       http://0.0.0.0:3100
   Admin Portal: http://0.0.0.0:3100/admin
-  Web Client:   http://0.0.0.0:3100
-  WebSocket:    ws://0.0.0.0:3100/ws
+  Health:       http://0.0.0.0:3100/api/health
 
-  Default admin account created:
-  Username: admin
-  Password: admin123
-  Please change the password after first login!
+  Service Status:
+  Groq API:     ✓ Connected
+  Ollama:       ✓ Ready
+  whisper.cpp:  Available (fallback)
 ```
+
+> 首次使用需呼叫 `POST /api/auth/set-password` 設定共用密碼（詳見 README）。
 
 ### 10. 建置 Admin Portal
 
@@ -143,20 +144,15 @@ npm install
 npm run build
 ```
 
-### 11. 建置 Web Client
+建置後 Server 會自動從 `/admin/` 路徑靜態託管，不需另外啟動 Admin Portal 服務。
 
-```bash
-cd ../client-web
-npm install
-npm run build
-```
-
-### 12. 從其他裝置連線
+### 11. 從其他裝置連線
 
 在同一區域網路的其他裝置，開啟瀏覽器：
 
 - Admin Portal：`http://<mac-mini-ip>:3100/admin`
-- Web Client：`http://<mac-mini-ip>:3100`
+
+或在 MacBook Air 上安裝 Electron Client（見 `electron/README.md`），指向 Mac Mini 的 IP（本機區網或 Tailscale）。
 
 查看 Mac Mini 的 IP：
 

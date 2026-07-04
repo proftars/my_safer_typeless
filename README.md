@@ -68,8 +68,8 @@ The server starts at `http://0.0.0.0:3100`.
 - **Server**: Node.js + Express + TypeScript + SQLite
 - **STT**: Groq Whisper API (primary) + whisper.cpp (fallback)
 - **LLM**: Ollama + Qwen 2.5:7B
-- **Desktop**: Electron + React (coming in v0.2.0)
-- **Admin Portal**: React + shadcn/ui (coming in v0.3.0)
+- **Desktop**: Electron (menu bar app, Web Audio API)
+- **Admin Portal**: React 18 + Tailwind CSS + Vite
 
 ## Version History
 

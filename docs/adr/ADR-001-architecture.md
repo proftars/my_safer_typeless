@@ -105,6 +105,10 @@ OpenWhispr 的快捷鍵、貼上、whisper.cpp 整合邏輯是公開的且寫得
 ## Action Items
 
 1. [x] 完成技術規劃文件 v1.2
-2. [ ] Kevin 註冊 Groq API Key
-3. [ ] 確認 GitHub repo 存取權限
-4. [ ] 開始 Phase 1：Server 核心 MVP (v0.1.0)
+2. [x] Kevin 註冊 Groq API Key
+3. [x] 確認 GitHub repo 存取權限
+4. [x] Phase 1：Server 核心 MVP（v0.1.0 / v0.1.1）
+5. [x] Phase 2：Admin Portal（v0.2.0）— 實際開發順序與原 plan 相反，Admin Portal 先完成
+6. [x] Phase 3：Electron 桌面 App（v0.3.0）
+7. [ ] 端到端驗收（v0.3.0）
+8. [ ] Phase 4：打包、LaunchAgent、Tailscale 指南（v1.0.0）

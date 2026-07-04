@@ -1,6 +1,6 @@
 {
   "name": "my-safer-typeless-electron",
-  "version": "1.0.0",
+  "version": "0.3.0",
   "description": "Electron menu bar app for voice-to-text transcription",
   "main": "./dist/main.js",
   "author": "Your Name",
@@ -23,8 +23,6 @@
   },
   "dependencies": {
     "electron-store": "^8.1.0",
-    "node-record-lpcm16": "^1.0.0",
-    "wav": "^1.0.2",
     "axios": "^1.6.2"
   },
   "build": {

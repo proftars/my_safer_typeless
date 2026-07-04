@@ -2,10 +2,16 @@ import 'dotenv/config'; // Load .env before anything else
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import { readFileSync } from 'fs';
 import { config } from './config';
 import { initDb, closeDb } from './db';
 import { checkGroqHealth } from './services/stt-groq';
 import { checkOllamaHealth } from './services/ollama';
+
+const APP_VERSION: string = (() => {
+  const pkg = JSON.parse(readFileSync(path.join(__dirname, '..', 'package.json'), 'utf-8'));
+  return pkg.version;
+})();
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -46,7 +52,7 @@ app.get('/api/health', async (_req, res) => {
 
   res.json({
     status: 'ok',
-    version: '1.0.0',
+    version: APP_VERSION,
     services: {
       groq: groqOk ? 'connected' : 'unavailable',
       ollama: ollama.running
@@ -72,7 +78,7 @@ async function start() {
 
   app.listen(config.port, config.host, async () => {
     console.log('');
-    console.log('  My Safer Typeless Server v1.0.0');
+    console.log(`  My Safer Typeless Server v${APP_VERSION}`);
     console.log('  ================================');
     console.log(`  Server:       http://${config.host}:${config.port}`);
     console.log(`  Admin Portal: http://${config.host}:${config.port}/admin`);

@@ -12,7 +12,9 @@ export interface AppSettings {
 }
 
 const defaultSettings: AppSettings = {
-  serverUrl: 'http://localhost:3100',
+  // Use 127.0.0.1 instead of localhost: Node 18+ resolves localhost to ::1 (IPv6)
+  // first, but the server binds IPv4 only (0.0.0.0) so IPv6 connects fail.
+  serverUrl: 'http://127.0.0.1:3100',
   authToken: null,
   hotkeyKey: 'Control+`',
   autoRefine: true,

@@ -81,10 +81,11 @@ export class TrayManager {
     this.tray.setToolTip('My Safer Typeless');
     this.updateMenu();
 
+    // Refresh menu before showing so Status line reflects current state.
+    // Clicking the tray (left or right) opens the context menu automatically
+    // because setContextMenu is set — we only regenerate it here.
     this.tray.on('click', () => {
-      if (hotkeyManager.getState() === AppState.IDLE) {
-        hotkeyManager['handleHotkeyPress']?.();
-      }
+      this.updateMenu();
     });
 
     this.tray.on('right-click', () => {
